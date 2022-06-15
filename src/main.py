@@ -1,3 +1,4 @@
+import sys
 import glob
 import numpy as np
 import cv2
@@ -17,30 +18,65 @@ def fetch_image_list(cfg):
     
     return image_list
 
+def check_is_power_of_two(image_size):
+    image_size = int(image_size)
+    is_power_of_two = np.abs(np.log2(image_size) - int(np.log2(image_size))) < 10**(-6)    
+    if not is_power_of_two:
+        print("output image size is NOT power of two. Modify output_image_size `./cfg.yaml`. ")
+        sys.exit()
+    else:
+        return
+    
+def down_size_output_image_less_than_cropped_image(output_image_size, image_shape):
+    while output_image_size > np.min(image_shape[0:2]):
+            output_image_size = int(output_image_size/2)
+    return output_image_size
+
+def generate_square_image(image, output_image_size):
+    image_height, image_width = image.shape[0], image.shape[1]
+    
+    left = np.random.randint(0, image_width  - output_image_size + 1)
+    top  = np.random.randint(0, image_height - output_image_size + 1)
+    right, bottom = left + output_image_size, top + output_image_size
+    
+    return image[top:bottom, left:right, :]
+
+def resize_image(output_image, output_image_size_org):
+    if output_image.shape[0] != output_image_size_org:
+            output_image = cv2.resize(output_image,
+                                      (output_image_size_org, output_image_size_org),
+                                      interpolation=cv2.INTER_CUBIC)
+    
+    return output_image
+
+def write_square_image(output_image, image_name, cfg):
+    output_directory, output_extension = cfg['output_directory'], cfg['output_extension']
+    output_image_path = output_directory + image_name + '.' +output_extension
+    cv2.imwrite(output_image_path, output_image)
+    return
+
 def main():
     cfg = load_config_yaml()
-    output_image_size, output_directory = cfg['output_image_size'], cfg['output_directory']
+    output_image_size_org, output_directory, output_extension = \
+        cfg['output_image_size'], cfg['output_directory'], cfg['output_extension']
+    
+    check_is_power_of_two(output_image_size_org)
+    
     image_list = fetch_image_list(cfg)
     
     for image_path in tqdm.tqdm(image_list):
         
         image = cv2.imread(image_path)
         image_name = image_path.split('/')[-1].split('.')[0]
-        image_height, image_width = image.shape[0], image.shape[1]
         
+        output_image_size = cfg['output_image_size']
         
-        if np.min(image.shape[0:2]) >= output_image_size:
-            left = np.random.randint(0, image_width  - output_image_size)
-            top  = np.random.randint(0, image_height - output_image_size)
-            right, bottom = left + output_image_size, top + output_image_size
-            output_image = image[left:right, top:bottom, :]
-            try:
-                cv2.imwrite(output_directory + image_name + ".png", output_image)
-            except:
-                print([right, bottom], [image_height, image_width])
-        else:
-            pass
+        output_image_size = down_size_output_image_less_than_cropped_image(output_image_size, image.shape)
+        output_image = generate_square_image(image, output_image_size)
+        output_image = resize_image(output_image, cfg['output_image_size'])
         
+        write_square_image(output_image, image_name, cfg)
+                
     return
 
 if __name__ == "__main__":
