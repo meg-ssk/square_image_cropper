@@ -3,6 +3,14 @@
 ## Description
 This code generates such square images with the power of 2 size from images of various sizes.
 
+**Input**
+
+![input image](assets/input.bmp)
+
+**Output**
+
+![output image](assets/output.png)
+
 ## Installation
 Develop environment can be installed by:
 ```

@@ -140,7 +140,8 @@ dmypy.json
 *.tif
 *.tiff
 *.bmp
-!/assets/images_for_README/*.png
+!/assets/*.png
+!/assets/*.bmp
 
 # compressed files
 *.zip
