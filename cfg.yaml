@@ -1,0 +1,4 @@
+path_to_image_directory: "./datasets/"
+target_extension: "bmp"
+output_image_size: 256
+output_directory: "./output/"
